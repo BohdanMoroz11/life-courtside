@@ -337,6 +337,16 @@ function outlookFor(last?: LastSeason): TeamDetail["outlook"] {
   return { label: "Rebuilding", reason };
 }
 
+/**
+ * This season's salary. ESPN is slow to enter contracts for players who signed or moved over the summer:
+ * they have no current contract, only history. Then fall back to last season's, marked with its season.
+ */
+function salaryOf(a: any, lastLabel: string): Pick<RosterPlayer, "salary" | "salarySeason" | "contractYearsLeft"> {
+  if (a.contract?.salary) return { salary: a.contract.salary, contractYearsLeft: a.contract.yearsRemaining };
+  const prev = (a.contracts ?? []).find((c: any) => c.salary > 0 && c.season?.year && seasonLabel(c.season.year) === lastLabel);
+  return prev ? { salary: prev.salary, salarySeason: lastLabel } : {};
+}
+
 function toRosterPlayer(a: any, seasons: StatLine[], ov: any, currentLabel: string, lastLabel: string): Omit<RosterPlayer, "importance" | "tier"> {
   return {
     id: String(a.id),
@@ -352,8 +362,7 @@ function toRosterPlayer(a: any, seasons: StatLine[], ov: any, currentLabel: stri
     weight: kg(a.displayWeight),
     experience: a.experience?.years ?? 0,
     college: a.college?.name,
-    salary: a.contract?.salary || undefined,
-    contractYearsLeft: a.contract?.yearsRemaining,
+    ...salaryOf(a, lastLabel),
     injuryStatus: a.injuries?.[0]?.status,
     honors: honorsSummary(ov?.awards),
     note: ov?.rotowire?.headline,

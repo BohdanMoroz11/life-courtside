@@ -165,7 +165,9 @@ function InjuryDetail({ injury }: { injury: Injury }) {
 }
 
 function Facts({ p, rp }: { p: PlayerDetail; rp?: RosterPlayer }) {
-  const contract = rp?.salary
+  const contract = rp?.salarySeason
+    ? `${money(rp.salary)} in ${rp.salarySeason} (this season's deal not published yet)`
+    : rp?.salary
     ? `${money(rp.salary)} this season${rp.contractYearsLeft ? `, ${rp.contractYearsLeft} more yr${rp.contractYearsLeft > 1 ? "s" : ""} after` : ""}`
     : undefined;
   const items: [string, string | number | undefined, string?][] = [

@@ -321,7 +321,17 @@ function PlayerRow({ p, game, mode, injury, color, bg, height, rich }: RowProps)
           className={`text-right tnum ${col.show} ${main.has(col.key) ? big : "text-sm text-mute"} ${col.key === "pts" ? "font-semibold" : ""}`}
         />
       ))}
-      <span className="hidden text-right text-xs tnum text-mute @xl:block">{money(p.salary) ?? ""}</span>
+      {p.salarySeason ? (
+        <span
+          className="hidden text-right text-xs italic tnum text-mute/60 @xl:block"
+          data-tip-title={`${money(p.salary)} was his ${p.salarySeason} salary`}
+          data-tip="ESPN hasn't published his contract for this season yet (common after a summer signing or trade), so this is last season's pay. The new deal may differ."
+        >
+          {money(p.salary)}*
+        </span>
+      ) : (
+        <span className="hidden text-right text-xs tnum text-mute @xl:block">{money(p.salary) ?? ""}</span>
+      )}
     </a>
   );
 }
