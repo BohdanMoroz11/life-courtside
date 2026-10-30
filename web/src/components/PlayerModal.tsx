@@ -6,23 +6,25 @@ import { tip } from "../glossary";
 
 interface Props {
   playerId: string;
-  game: GameDetail;
-  teams: (TeamDetail | undefined)[];
+  game?: GameDetail; // absent when opened from the home page
+  teams?: (TeamDetail | undefined)[];
   onClose: () => void;
 }
 
 type Tab = "overview" | "stats" | "games" | "news";
 
-export function PlayerModal({ playerId, game, teams, onClose }: Props) {
+export function PlayerModal({ playerId, game, teams = [], onClose }: Props) {
   const { data: p, isLoading, error } = usePlayer(playerId);
   const [tab, setTab] = useState<Tab>("overview");
 
   // Roster entry (contract, importance) and game injury detail come from data we already have.
   const team = teams.find((t) => t?.roster.some((r) => r.id === playerId));
   const rp = team?.roster.find((r) => r.id === playerId);
-  const injury = Object.values(game.injuries).flat().find((i) => i.athleteId === playerId);
-  const color = team ? accent(team.team.color, team.team.altColor) : "#aab4c3";
-  const bg = team ? tint(team.team.color) : "#2a3240";
+  const injury = Object.values(game?.injuries ?? {}).flat().find((i) => i.athleteId === playerId);
+  // From the home page there's no roster at hand; the player's own team still gives the colors.
+  const teamColor = team?.team.color ?? p?.team?.color;
+  const color = teamColor ? accent(teamColor) : "#aab4c3";
+  const bg = teamColor ? tint(teamColor) : "#2a3240";
 
   const tabs: { value: Tab; label: string }[] = [
     { value: "overview", label: "Overview" },
@@ -90,8 +92,8 @@ export function PlayerModal({ playerId, game, teams, onClose }: Props) {
   );
 }
 
-function Overview({ p, rp, injury, game }: { p: PlayerDetail; rp?: RosterPlayer; injury?: Injury; game: GameDetail }) {
-  const box = game.state !== "pre" ? game.box[p.id] : undefined;
+function Overview({ p, rp, injury, game }: { p: PlayerDetail; rp?: RosterPlayer; injury?: Injury; game?: GameDetail }) {
+  const box = game && game.state !== "pre" ? game.box[p.id] : undefined;
   const label = "mb-1.5 font-display text-lg font-bold";
   return (
     <div className="space-y-4">
@@ -105,7 +107,7 @@ function Overview({ p, rp, injury, game }: { p: PlayerDetail; rp?: RosterPlayer;
         <div className="rounded-lg border border-live/40 bg-live/10 p-3 text-sm tnum">
           {box.didNotPlay ? "Didn't play in this game." : (
             <>
-              <b className="text-live">{game.state === "in" ? "Live" : "This game"}</b> {box.pts} pts, {box.reb} reb, {box.ast} ast,{" "}
+              <b className="text-live">{game?.state === "in" ? "Live" : "This game"}</b> {box.pts} pts, {box.reb} reb, {box.ast} ast,{" "}
               <Term k="madeAttempted">FG {box.fg}, 3PT {box.threes}</Term>, {box.min} min, <Term k="plusMinus">{box.plusMinus} +/-</Term>
               {box.starter ? ", started" : ", off the bench"}
             </>

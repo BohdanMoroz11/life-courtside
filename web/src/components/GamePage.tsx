@@ -112,7 +112,7 @@ function Header({ game, updatedAt, toggle, onMatchup }: { game: GameDetail; upda
       style={{ background: `linear-gradient(100deg, ${tint(away.color)} 0%, ${tint(away.color)}aa 22%, #18212f 45%, #18212f 55%, ${tint(home.color)}aa 78%, ${tint(home.color)} 100%)` }}
     >
       <div className="flex flex-wrap items-center gap-x-6 gap-y-1 px-3 py-2 sm:px-4">
-        <a href="#/" className="text-sm text-ink/80 hover:text-ink" aria-label="All games">‹<span className="hidden @md:inline"> Games</span></a>
+        <a href="#/" className="text-sm text-ink/80 hover:text-ink" aria-label="Home">‹<span className="hidden @md:inline"> Home</span></a>
 
         <div className="grid flex-1 grid-cols-[1fr_auto_1fr] items-center gap-3 @4xl:flex-none @4xl:gap-6">
           <HeaderTeam team={away} />

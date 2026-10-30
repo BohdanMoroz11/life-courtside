@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import type { GameCard, GameDetail, PlayerDetail, StatLine, TeamDetail, Tier } from "../../shared/types";
+import type {
+  GameCard, GameDetail, LeaderCategory, NewsItem, PlayerDetail, ResultCard, Standings, StatLine, TeamDetail, Tier, WatchGuide,
+} from "../../shared/types";
 
 // ---------- data ----------
 
@@ -19,6 +21,27 @@ export const useGames = () =>
     queryFn: () => get<{ date: string; games: GameCard[]; upcoming?: boolean }>("/api/games"),
     refetchInterval: 30_000,
   });
+
+// Home page. Pre-game facts move slowly; scores come from useGames.
+export const useWatch = (date?: string) =>
+  useQuery({
+    queryKey: ["watch", date],
+    queryFn: () => get<Record<string, WatchGuide>>(`/api/watch?date=${date!.replaceAll("-", "")}`),
+    enabled: !!date,
+    refetchInterval: 5 * 60_000,
+  });
+
+export const useResults = () =>
+  useQuery({ queryKey: ["results"], queryFn: () => get<{ days: { date: string; games: ResultCard[] }[] }>("/api/results"), refetchInterval: 10 * 60_000 });
+
+export const useStandings = () =>
+  useQuery({ queryKey: ["standings"], queryFn: () => get<Standings>("/api/standings"), refetchInterval: 10 * 60_000 });
+
+export const useLeaders = () =>
+  useQuery({ queryKey: ["leaders"], queryFn: () => get<{ season: string; categories: LeaderCategory[] }>("/api/leaders"), refetchInterval: 30 * 60_000 });
+
+export const useNews = () =>
+  useQuery({ queryKey: ["news"], queryFn: () => get<NewsItem[]>("/api/news"), refetchInterval: 10 * 60_000 });
 
 export const useGame = (id: string) =>
   useQuery({
@@ -50,15 +73,17 @@ export const usePlayer = (id?: string) =>
   });
 
 // ---------- routing (hash based, no dependency) ----------
-// #/                      games list
+// #/                      home (tonight, results, standings, leaders, news)
+// #/p/:playerId, #/t/:teamId  home with a player or team modal open
 // #/game/:id              game page
 // #/game/:id/p/:playerId  game page with player sheet open
 
-export type Route = { page: "games" } | { page: "game"; id: string; playerId?: string };
+export type Route = { page: "home"; playerId?: string; teamId?: string } | { page: "game"; id: string; playerId?: string };
 
 function parse(hash: string): Route {
   const m = hash.match(/^#\/game\/(\w+)(?:\/p\/(\w+))?/);
-  return m ? { page: "game", id: m[1], playerId: m[2] } : { page: "games" };
+  if (m) return { page: "game", id: m[1], playerId: m[2] };
+  return { page: "home", playerId: hash.match(/^#\/p\/(\w+)/)?.[1], teamId: hash.match(/^#\/t\/(\w+)/)?.[1] };
 }
 
 export function useRoute(): Route {
@@ -143,6 +168,27 @@ export function injuryTone(status?: string) {
 
 /** Which numbers the roster tables show: a season's per-game averages, or this game's box score. */
 export type StatMode = "last" | "current" | "tonight";
+
+/** Track an element's size, so panels can pick a layout for the space they actually have. */
+export function useSize<T extends HTMLElement>() {
+  const [el, ref] = useState<T | null>(null);
+  const [size, setSize] = useState({ w: 0, h: 0 });
+  useEffect(() => {
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setSize({ w: e.contentRect.width, h: e.contentRect.height }));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [el]);
+  return [ref, size] as const;
+}
+
+export function timeAgo(iso?: string) {
+  if (!iso) return "";
+  const m = Math.round((Date.now() - Date.parse(iso)) / 60_000);
+  if (m < 60) return `${Math.max(m, 1)} min ago`;
+  if (m < 48 * 60) return `${Math.round(m / 60)} h ago`;
+  return `${Math.round(m / 1440)} days ago`;
+}
 
 /** Track an element's height, so layouts can fit content to the viewport instead of scrolling. */
 export function useHeight<T extends HTMLElement>() {

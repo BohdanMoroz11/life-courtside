@@ -4,21 +4,26 @@ Context for coding agents (and future me). Read this before changing things.
 
 ## What this is
 
-A throwaway-but-loved personal project: a "second screen" web app for someone who **doesn't follow the NBA closely** and wants to understand a game while watching it, meaning who the teams are and who the players are. The owner cares mostly about **UI and how understandable it is**, not the tech. Keep it simple, hackable and fun.
+A throwaway-but-loved personal project for someone who **doesn't follow the NBA closely** (and watches live, not replays, so spoilers aren't a concern). Two parts:
+- **Home**: which of tonight's games to watch (a ranked "watch score" with reasons), recent results, standings, league leaders, news.
+- **Game page**: a "second screen" while watching: who the teams are and who the players are.
+
+The owner cares mostly about **UI and how understandable it is**, not the tech. Keep it simple, hackable and fun.
 
 Priorities, in order:
 1. Rosters for tonight's game: who matters, pics, numbers, stats, injuries, salary, career gist.
-2. Team context: identity, goals, last season, news, lore.
-3. Live score and box score (nice to have, already in).
+2. Picking tonight's game, and a league overview (results, standings, leaders, news).
+3. Team context: identity, goals, last season, news, lore.
+4. Live score and box score.
 
-Non-goals for now: browsing beyond today's slate, accounts, persistence, deployment, AI.
+Non-goals for now: accounts, persistence, deployment. AI news summaries are planned (see below); news is plain ESPN headlines until then.
 
 ## Stack
 
 - **Server**: Node + Express, TypeScript run directly with `tsx` (no build step). `server/`
 - **Frontend**: React 18 + Vite + Tailwind v4 + TanStack Query. `web/`
 - **Shared types**: `shared/types.ts`, the contract between server and UI. Change it first when adding data.
-- Hash routing in `web/src/lib.ts` (no router dependency): `#/`, `#/game/:id`, `#/game/:id/p/:playerId`.
+- Hash routing in `web/src/lib.ts` (no router dependency): `#/` (home), `#/p/:playerId` and `#/t/:teamId` (home with a player or team modal), `#/game/:id`, `#/game/:id/p/:playerId`.
 
 Runs on a Hetzner box (CPU only, 62 GB RAM), accessed through an SSH tunnel. Server binds to `127.0.0.1:5180`.
 
@@ -26,9 +31,12 @@ Runs on a Hetzner box (CPU only, 62 GB RAM), accessed through an SSH tunnel. Ser
 
 ```
 server/
-  index.ts       Express routes: /api/games, /api/game/:id, /api/team/:id, /api/player/:id, /api/health
+  index.ts       Express routes: /api/games, /api/watch, /api/results, /api/standings, /api/leaders, /api/news,
+                 /api/game/:id, /api/team/:id, /api/player/:id, /api/health
   espn.ts        ESPN URLs, fetch + in-memory TTL cache, mapLimit concurrency helper
   data.ts        Raw ESPN payloads -> shared types (games, game detail, team, player)
+  home.ts        Home page data: watch-score inputs, recent results, standings, leaders, news
+  watch.ts       Heuristic "watch score" for a game (pure function, tune freely)
   importance.ts  Heuristic ranking of a roster into star / starter / rotation / bench
 shared/types.ts  API response types
 data/lore.json   Hand-written team history keyed by ESPN abbreviation (BOS, GS, NY, UTAH, WSH, ...)
@@ -36,7 +44,8 @@ web/src/
   lib.ts         Query hooks, hash router, formatting, team-color helpers
   glossary.ts    Plain-language explainers for every stat/term, shown as hover tooltips
   styles.css     Design tokens (Tailwind @theme) and the few custom classes
-  components/    GamesPage, GamePage (header + layout), TeamPanel (team strip + fit-to-height roster),
+  components/    HomePage (panel layout) + TonightPanel, ResultsPanel, LeaguePanels (standings, leaders, news),
+                 GamePage (header + layout), TeamPanel (team strip + fit-to-height roster),
                  MatchupPanel (preview, team stat comparison, last 5, odds), TeamModal, PlayerModal,
                  ui (Tooltips layer, Term, Flash, Modal, Segmented, pills...)
 docs/data-sources.md  ESPN endpoints we use and what's in them
@@ -56,8 +65,10 @@ docs/data-sources.md  ESPN endpoints we use and what's in them
 - Team stat comparison: ESPN core API `/seasons/{y}/types/2/teams/{id}/statistics` (has league ranks); points allowed and margin are ranked from standings. Uses last season until the team has 10 games.
 - Heights and weights are converted to metric on the server (`cm()`/`kg()`); the owner isn't American. Don't show US units.
 - Coach: name from the roster, headshot from core `/seasons/{y}/coaches/{id}`, career records from core `/coaches/{id}/record/2` (regular season) and `/3` (playoffs). `experience` = completed seasons as head coach. ESPN lacks birth dates for some coaches.
+- Watch score (`watch.ts`, 0-100): close game 35 (betting spread, else ESPN's win %), team quality 30 (ESPN BPI of both teams, the weaker one counts extra), star power 25 (best available player per team + a bit for a second; "star" = honorsWeight >= 2 or 24+ PPG), story 10 (lore rivals, 3+ win streak, top-6 clash after 10 games, over/under >= 232). Every point comes with a reason string shown on the card. Star candidates are each team's ESPN `rating` and scoring leader plus everyone on the injury report (an injured star is never a leader, but his absence matters); honors and averages come from `/overview`.
+- Results: the last 3 days with finished games (searching back up to 10 days), with AP recap, each team's best player and points per quarter.
 - TV broadcasts are deliberately not shown (US channels mean nothing to the owner).
-- Caching: scoreboard and game summary 15 s (the browser decides how often to poll: 15 s live, 30 s near tip-off, 5 min otherwise); `getJson` honors the shorter of the stored and requested TTL, team/news 30 min, roster and player stats 6 h, last-season data 24 h. All in memory, so a restart clears it.
+- Caching: scoreboard and game summary 15 s (the watch score reads summaries with a 5 min TTL) (the browser decides how often to poll: 15 s live, 30 s near tip-off, 5 min otherwise); `getJson` honors the shorter of the stored and requested TTL, team/news/leaders/BPI 30 min, league news 5 min, roster and player stats 6 h, last-season data 24 h. All in memory, so a restart clears it.
 
 ## Design
 
@@ -65,7 +76,8 @@ Direction: "broadcast tale of the tape". Dark arena base (`#0F1622`), each team 
 
 - Jersey numbers are the signature: big display-font numbers in team color on every roster row, and the giant outlined number (`.jersey-ghost`) in the player modal. Don't add more decoration elsewhere.
 - Team colors: use `accent()` for text/strokes on dark (lightens the team color until it has ~3:1 contrast) and `tint()` for backgrounds.
-- **The game page must fit the viewport with no page scroll.** This is the owner's #1 UI requirement: everything visible at a glance while watching. Detail goes into modals and tabs (team "About" modal, player modal with tabs), never into a longer page.
+- **Both pages must fit the viewport with no page scroll.** This is the owner's #1 UI requirement: everything visible at a glance while watching. Detail goes into modals and tabs (team "About" modal, player modal with tabs), never into a longer page.
+- **Home layout** (`HomePage`): panels in priority order (tonight, results, standings, leaders, news). The window width decides how many get their own column (5 at >=1880px, 4, 3, 2, 1 below 720px); the rest share the last column behind tabs. Each panel measures itself (`useSize`) and picks a density: Tonight gives top-ranked games the full card (reasons + star headshots) while they fit (`RICH_H`/`COMPACT_H`); Results picks full (with quarters) / rich / compact / mini rows per day and adds older days while there's room; Standings stacks both conferences, else side by side, else an East/West toggle; Leaders shows as many categories and names as fit; News as many items as fit. Keep the height constants in sync with the markup.
   - **Fill the space, too.** Empty area on a big screen is wasted: as the viewport grows, show more data rather than bigger padding. Wide (≥100rem): three columns, away | matchup | home. Medium: two teams, matchup behind a header button. Narrow: tabs (away / home / matchup).
   - Roster columns appear with panel width (MIN at `@md`, salary `@xl`, GP/FG%/3P% `@2xl`, STL/BLK `@3xl`; see `GRID`/`COLS` in `TeamPanel`).
   - `TeamPanel`'s roster measures its own height (`useHeight`) and `layout()` picks a density: "rich" (stars/key players get meta, honors and the latest Rotowire note) if the whole roster fits that way, else "compact". `fit()` keeps players in importance order with fixed row heights per tier (`ROW_H`); anything left goes behind a "+N more" row that opens a modal. If you change row markup, keep `ROW_H` in sync.
@@ -94,7 +106,7 @@ Direction: "broadcast tale of the tape". Dark arena base (`#0F1622`), each team 
 ## Roadmap / ideas
 
 - AI "storylines" per team and player from news (see above).
-- Date picker / browse any team.
+- Date picker / browse any team (standings rows already open the team modal).
 - Live play-by-play or a quarter-by-quarter score table (summary endpoint has `plays` for live games).
 - Team stats comparison (pace, offense/defense rank) in the matchup header.
 - Head-to-head history between the two teams.

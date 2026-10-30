@@ -7,7 +7,7 @@ import type {
   PlayerDetail, RecentResult, RosterPlayer, StatLine, TeamDetail, TeamRef, TeamStatRow,
 } from "../shared/types.ts";
 
-const num = (v: unknown) => {
+export const num = (v: unknown) => {
   const n = parseFloat(String(v));
   return Number.isFinite(n) ? n : 0;
 };
@@ -26,7 +26,7 @@ function logoOf(t: any): string {
   return t.logo ?? t.logos?.find((l: any) => l.rel?.includes("default"))?.href ?? t.logos?.[0]?.href ?? "";
 }
 
-function teamRef(t: any, extra: Partial<TeamRef> = {}): TeamRef {
+export function teamRef(t: any, extra: Partial<TeamRef> = {}): TeamRef {
   return {
     id: String(t.id),
     abbr: t.abbreviation,
@@ -40,7 +40,7 @@ function teamRef(t: any, extra: Partial<TeamRef> = {}): TeamRef {
   };
 }
 
-function newsItems(articles: any[] = []): NewsItem[] {
+export function newsItems(articles: any[] = []): NewsItem[] {
   return articles.map((a) => ({
     headline: a.headline,
     description: a.description,
@@ -60,7 +60,7 @@ function competitorRef(c: any): TeamRef {
   });
 }
 
-function cardFromCompetition(id: string, comp: any): GameCard {
+export function cardFromCompetition(id: string, comp: any): GameCard {
   const st = comp.status;
   const state = st.type.state as GameCard["state"];
   const away = comp.competitors.find((c: any) => c.homeAway === "away");
@@ -179,7 +179,7 @@ function parsePreview(story?: string): { bottomLine?: string; paragraphs: string
 // ---------- teams ----------
 
 /** "4× MVP, 1× Finals MVP, 21× All-NBA": the honors a casual fan recognizes, merged and ordered. */
-function honorsSummary(awards: any[] = []): string | undefined {
+export function honorsSummary(awards: any[] = []): string | undefined {
   const groups: [string, RegExp][] = [
     ["MVP", /^MVP$/],
     ["Finals MVP", /^Finals MVP$/],
@@ -197,6 +197,12 @@ function honorsSummary(awards: any[] = []): string | undefined {
     if (n) parts.push(`${n}× ${label}`);
   }
   return parts.length ? parts.join(", ") : undefined;
+}
+
+/** Roughly "how decorated": an MVP counts 3, Finals MVP 2, DPOY 1.5, an All-NBA team or ROY 1. Used to spot stars. */
+export function honorsWeight(awards: any[] = []): number {
+  const w: [RegExp, number][] = [[/^MVP$/, 3], [/^Finals MVP$/, 2], [/Defensive Player of the Year/, 1.5], [/^All-NBA/, 1], [/^Rookie of the Year$/, 1]];
+  return awards.reduce((sum, a) => sum + (w.find(([re]) => re.test(a.name))?.[1] ?? 0) * (parseInt(a.displayCount) || 1), 0);
 }
 
 /** Team stats with league ranks. ESPN ranks most stats; points allowed and differential we rank from standings. */
@@ -272,7 +278,7 @@ function seasonLine(seasons: StatLine[], season: string): StatLine | undefined {
   };
 }
 
-function seasonLabel(year: number) {
+export function seasonLabel(year: number) {
   // ESPN season "year" 2027 == 2026-27
   return `${year - 1}-${String(year).slice(2)}`;
 }

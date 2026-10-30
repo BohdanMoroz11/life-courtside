@@ -2,6 +2,7 @@ import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getGame, getGames, getPlayer, getTeam } from "./data.ts";
+import { getLeaders, getNews, getResults, getStandings, getWatch } from "./home.ts";
 import { cacheStats } from "./espn.ts";
 
 const PORT = Number(process.env.PORT ?? 5180);
@@ -21,6 +22,11 @@ const route = (fn: (req: express.Request) => Promise<unknown>): express.RequestH
 
 app.get("/api/health", (_req, res) => res.json({ ok: true, ...cacheStats() }));
 app.get("/api/games", route((req) => getGames(typeof req.query.date === "string" ? req.query.date : undefined)));
+app.get("/api/watch", route((req) => getWatch(typeof req.query.date === "string" ? req.query.date : undefined)));
+app.get("/api/results", route(() => getResults()));
+app.get("/api/standings", route(() => getStandings()));
+app.get("/api/leaders", route(() => getLeaders()));
+app.get("/api/news", route(() => getNews()));
 app.get("/api/game/:id", route((req) => getGame(req.params.id)));
 app.get("/api/team/:id", route((req) => getTeam(req.params.id)));
 app.get("/api/player/:id", route((req) => getPlayer(req.params.id)));

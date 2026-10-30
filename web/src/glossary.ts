@@ -48,12 +48,29 @@ export const GLOSSARY: Record<string, Entry> = {
   "team.stl": { title: "Steals", body: "Times per game they take the ball off the opponent." },
   "team.blk": { title: "Blocks", body: "Opponent shots knocked away per game." },
   "team.tov": { title: "Turnovers", body: "Losing the ball without getting a shot off (bad pass, stepping out of bounds, getting stripped). Lower is better." },
+  bpi: { title: "Team strength (ESPN BPI)", body: "ESPN's Basketball Power Index: how many points better or worse than an average team they'd be on a neutral court. +8 is title-favorite level, around 0 is average, -8 is one of the worst. Early in the season it leans on last year and the roster." },
   rank: { title: "League rank", body: "Out of 30 teams, 1st is best. Green is top 5, red is bottom 5." },
+
+  // Home page
+  watch: { title: "Watch score", body: "Our own 0-100 guess at how fun a game will be, made from four things:\nClose game (35): the betting line. A small spread means a tight game is expected.\nTeam quality (30): ESPN's team strength for both teams.\nStar power (25): famous or high-scoring players who are actually playing.\nStory (10): rivalries, winning streaks, a fight for the top of the standings, a high-scoring forecast.\n\nNot an official number." },
+  seed: { title: "Position", body: "Place in the conference, by win percentage. Top 6 go straight to the playoffs, 7-10 play a mini-tournament (the play-in) for the last two spots, 11-15 are out. The season is long (82 games), so early positions move a lot." },
+  winLoss: { title: "Wins-losses", body: "There are no draws in basketball (ties go to 5-minute overtime). Teams are ranked by win percentage, not points." },
+  gb: { title: "Games behind", body: "How far behind the conference leader. 1 game behind = one more win and one fewer loss would make them level. \"-\" is the leader." },
+  last10: { title: "Last 10 games", body: "Wins-losses over the 10 most recent games: current form." },
+  margin: { title: "Point margin", body: "Points scored minus points allowed, per game. Often a better sign of real strength than the record: +5 or better is a contender, below -5 is a bad team." },
+  "3pm": { title: "3-pointers made", body: "Shots made from behind the 3-point arc, per game. 3+ per game is a high-volume shooter; the very best make 4-5." },
+  leaders: { title: "League leaders", body: "The best per-game averages in the league this season. Players need to have played enough games to qualify. Early in the season the list jumps around a lot." },
+  periods: { title: "Quarters", body: "A game is four 12-minute quarters. If it's tied after four, they play 5-minute overtime periods (OT) until someone wins. The bold number won that quarter." },
+  topPerformer: { title: "Best player in the game", body: "ESPN's pick for the most productive player on each team in this game, from points, rebounds, assists and the rest." },
 
   // Game
   winChance: { title: "Win chance", body: "ESPN's computer model's estimate, made before the game, from team strength, home court, rest and injuries." },
   odds: { title: "Betting line", body: "The point spread bookmakers set. \"CLE -6.5\" means Cleveland is expected to win by about 6 or 7 points. The bigger the number, the more lopsided the game is expected to be." },
   overUnder: { title: "Expected total points", body: "Bookmakers' estimate of both teams' points added together (the \"over/under\"). 220-235 is typical; higher means a fast, high-scoring game is expected." },
+  rivals: { title: "Rivals", body: "Teams with a long history against each other: old playoff battles, the same city or region, or a famous feud. Players and fans care more, so these games tend to be intense." },
+  streak: { title: "Streak", body: "Wins (W) or losses (L) in a row. W5 = won the last 5 games. A team on a streak is in form, or in trouble." },
+  injuryStatus: { title: "Injury report", body: "Teams must report who might miss a game. Out = won't play. Day-to-day or questionable = a coin flip, usually decided shortly before tip-off." },
+  nbaCup: { title: "NBA Cup", body: "A tournament inside the regular season, in November and December (since 2023). Group games also count as normal league games; the top teams play a knockout round in December for the trophy and prize money." },
   series: { title: "Season series", body: "Head-to-head wins between these two teams this regular season. They usually meet 2 to 4 times." },
 };
 

@@ -217,3 +217,80 @@ export interface PlayerDetail {
   latestNote?: { headline: string; story?: string }; // Rotowire blurb
   news: NewsItem[];
 }
+
+// ---------- home page ----------
+
+/** One line of "why watch (or skip) this game". */
+export interface WatchReason {
+  text: string;
+  tone: "good" | "bad" | "info";
+  term?: string; // glossary key explaining the concept
+  detail?: string; // extra hover text specific to this game
+}
+
+export interface WatchStar {
+  id: string;
+  name: string;
+  headshot?: string;
+  team: string; // abbreviation
+  honors?: string; // "2× MVP, 10× All-NBA"
+  line?: string; // "28.8 PPG, 3.8 RPG, 3.5 APG"
+  status?: string; // injury status when not fully available
+}
+
+/** How watchable a game looks before tip-off, with the reasons. See server/watch.ts. */
+export interface WatchGuide {
+  score: number; // 0..100
+  verdict: string; // "Must watch", "Good pick", ...
+  parts: { label: string; value: number; max: number }[];
+  reasons: WatchReason[];
+  stars: WatchStar[];
+  note?: string; // "NBA Cup - Group Play"
+}
+
+export interface Performer {
+  id: string;
+  name: string;
+  headshot?: string;
+  line: string; // "29 PTS, 12 REB"
+}
+
+export interface ResultCard extends GameCard {
+  recap?: string; // one-line AP recap
+  top: Record<string, Performer | undefined>; // best performer by team id
+  periods: Record<string, number[]>; // points per quarter (and overtime) by team id
+  note?: string;
+}
+
+export interface StandingRow {
+  team: TeamRef;
+  seed: number;
+  wins: number;
+  losses: number;
+  pct: string; // ".800"
+  gb: string; // games behind the leader, "-" for the leader
+  streak: string; // "W3"
+  last10: string;
+  diff: number; // average point margin
+  strength?: number; // ESPN BPI rank, 1..30
+}
+
+export interface Standings {
+  season: string;
+  conferences: { name: string; rows: StandingRow[] }[];
+}
+
+export interface Leader {
+  id: string;
+  name: string;
+  headshot?: string;
+  team: string;
+  color: string;
+  value: string;
+}
+
+export interface LeaderCategory {
+  key: string; // glossary key
+  label: string;
+  leaders: Leader[];
+}

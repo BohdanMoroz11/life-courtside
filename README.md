@@ -4,7 +4,16 @@
 
 <img width="1560" height="784" alt="image" src="https://github.com/user-attachments/assets/0307cc7c-1752-4acb-aace-f95a3bec77f0" />
 
-A personal second-screen app for watching NBA games. Pick tonight's game and get a one-screen dashboard (no scrolling) with:
+A personal NBA app for a casual fan, in two one-screen dashboards (no scrolling).
+
+**Home** helps you pick a game and keep up with the league:
+
+- **Tonight**: games ranked by a 0-100 **watch score** (is it expected to be close, are both teams good, which stars play, rivalry and form), with the reasons spelled out ("Should be close: NY by 3.5", "Anthony Edwards is out") and star headshots. Hover the score for the breakdown.
+- **Results**: the last few game days, with scores by quarter, the AP one-line recap and each team's best player.
+- **Standings** for both conferences (playoff and play-in lines, form, streak, ESPN team strength), **league leaders** (points, rebounds, assists, threes, steals, blocks) and **news** headlines.
+- Click a player or team anywhere for details; panels that don't fit go behind tabs on smaller windows.
+
+**Game page**, a second screen while you watch:
 
 - **Header**: score or tip-off time in your timezone, live status (refreshes every 15 s, changed numbers glow briefly, "updated Xs ago"), ESPN's win probability, betting favorite, season series.
 - **Hover explainers** on every stat and term (what PTS, pace or the betting line mean, and what counts as good), plus tooltips showing the full text of anything cut off.
