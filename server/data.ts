@@ -1,6 +1,7 @@
 // Turns raw ESPN payloads into the compact shapes in shared/types.ts.
 import { espn, mapLimit } from "./espn.ts";
 import { rankRoster } from "./importance.ts";
+import { nameKey, SALARY_SOURCE, seasonSalaries } from "./salaries.ts";
 import lore from "../data/lore.json" with { type: "json" };
 import type {
   BoxLine, Coach, GameCard, GameDetail, GameLogEntry, Injury, LastSeason, Lore, NewsItem,
@@ -337,17 +338,14 @@ function outlookFor(last?: LastSeason): TeamDetail["outlook"] {
   return { label: "Rebuilding", reason };
 }
 
-/**
- * This season's salary. ESPN is slow to enter contracts for players who signed or moved over the summer:
- * they have no current contract, only history. Then fall back to last season's, marked with its season.
- */
-function salaryOf(a: any, lastLabel: string): Pick<RosterPlayer, "salary" | "salarySeason" | "contractYearsLeft"> {
+/** This season's salary: ESPN's contract, else the Spotrac-based dataset (see salaries.ts), else unknown. */
+function salaryOf(a: any, extra: Map<string, number>): Pick<RosterPlayer, "salary" | "salarySource" | "contractYearsLeft"> {
   if (a.contract?.salary) return { salary: a.contract.salary, contractYearsLeft: a.contract.yearsRemaining };
-  const prev = (a.contracts ?? []).find((c: any) => c.salary > 0 && c.season?.year && seasonLabel(c.season.year) === lastLabel);
-  return prev ? { salary: prev.salary, salarySeason: lastLabel } : {};
+  const salary = extra.get(nameKey(a.displayName));
+  return salary ? { salary, salarySource: SALARY_SOURCE } : {};
 }
 
-function toRosterPlayer(a: any, seasons: StatLine[], ov: any, currentLabel: string, lastLabel: string): Omit<RosterPlayer, "importance" | "tier"> {
+function toRosterPlayer(a: any, seasons: StatLine[], ov: any, salaries: Map<string, number>, currentLabel: string, lastLabel: string): Omit<RosterPlayer, "importance" | "tier"> {
   return {
     id: String(a.id),
     name: a.displayName,
@@ -362,7 +360,7 @@ function toRosterPlayer(a: any, seasons: StatLine[], ov: any, currentLabel: stri
     weight: kg(a.displayWeight),
     experience: a.experience?.years ?? 0,
     college: a.college?.name,
-    ...salaryOf(a, lastLabel),
+    ...salaryOf(a, salaries),
     injuryStatus: a.injuries?.[0]?.status,
     honors: honorsSummary(ov?.awards),
     note: ov?.rotowire?.headline,
@@ -411,7 +409,8 @@ export async function getTeam(teamId: string): Promise<TeamDetail> {
     ),
     mapLimit(athletes, 6, (a) => espn.athleteOverview(String(a.id)).catch(() => null)),
   ]);
-  const players = athletes.map((a, i) => toRosterPlayer(a, statsList[i].seasons, overviews[i], currentLabel, lastLabel));
+  const salaries = await seasonSalaries(currentLabel);
+  const players = athletes.map((a, i) => toRosterPlayer(a, statsList[i].seasons, overviews[i], salaries, currentLabel, lastLabel));
 
   const lastSeason = await lastSeasonFor(teamId, currentYear);
   let conference: string | undefined;

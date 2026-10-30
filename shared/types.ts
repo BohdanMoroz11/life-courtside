@@ -111,7 +111,7 @@ export interface RosterPlayer {
   experience: number; // years in league
   college?: string;
   salary?: number;
-  salarySeason?: string; // set when ESPN has no contract for this season yet and salary is from this (last) season
+  salarySource?: string; // set when ESPN has no contract yet and the salary comes from elsewhere (server/salaries.ts)
   contractYearsLeft?: number;
   injuryStatus?: string; // from roster, e.g. "Out"
   honors?: string; // "4× MVP, 21× All-NBA"

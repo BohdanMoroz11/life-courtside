@@ -45,4 +45,10 @@ Images: headshots `https://a.espncdn.com/i/headshots/nba/players/full/{id}.png`,
 
 Team IDs / abbreviations (ESPN): ATL 1, BOS 2, NO 3, CHI 4, CLE 5, DAL 6, DEN 7, DET 8, GS 9, HOU 10, IND 11, LAC 12, LAL 13, MIA 14, MIL 15, MIN 16, BKN 17, NY 18, ORL 19, PHI 20, PHX 21, POR 22, SAC 23, SA 24, OKC 25, UTAH 26, WSH 27, TOR 28, MEM 29, CHA 30.
 
-ESPN sometimes answers 200 with an empty body. `getJson` retries once and logs `ESPN fetch failed: <url>` if the retry fails too.
+ESPN sometimes answers 200 with an empty body. `getJson`/`getText` retry once and log `Fetch failed: <url>` if the retry fails too.
+
+## Salaries (non-ESPN)
+
+`https://raw.githubusercontent.com/gabriel1200/site_Data/master/nba_salaries.csv`: one row per player, columns `Player, spotrac_id, nba_id, bref_id, Pos, Age, 2026-27, 2027-28, ..., Team, ..., Guaranteed`. Scraped from Spotrac by a community project, committed daily. Season columns are named like our season labels. Two-way players are 0. Used only where ESPN's roster has no `contract` (see `server/salaries.ts`).
+
+Checked and blocked from the server (403/402, Cloudflare): Spotrac, Basketball-Reference, HoopsHype, RealGM. Wikipedia team-season pages are reachable but only mention contract amounts in prose.

@@ -19,19 +19,27 @@ type Entry = { at: number; ttl: number; value: Promise<any> };
 const cache = new Map<string, Entry>();
 
 export async function getJson<T = any>(url: string, ttl: number): Promise<T> {
+  return cached(url, ttl, (r) => r.json());
+}
+
+export async function getText(url: string, ttl: number): Promise<string> {
+  return cached(url, ttl, (r) => r.text());
+}
+
+function cached(url: string, ttl: number, read: (r: Response) => Promise<any>): Promise<any> {
   const hit = cache.get(url);
   // The caller's TTL counts too: the same URL can be wanted fresher than it was first cached for.
   if (hit && Date.now() - hit.at < Math.min(hit.ttl, ttl)) return hit.value;
   const load = () =>
     fetch(url, { headers: { "User-Agent": "nba-tracker (personal project)" } }).then(async (r) => {
-      if (!r.ok) throw new Error(`ESPN ${r.status} for ${url}`);
-      return r.json();
+      if (!r.ok) throw new Error(`${r.status} for ${url}`);
+      return read(r);
     });
   // ESPN now and then answers 200 with an empty or cut-off body; one retry usually fixes it.
   const value = load()
     .catch(() => new Promise((ok) => setTimeout(ok, 400)).then(load))
     .catch((err) => {
-      console.warn(`ESPN fetch failed: ${url}: ${err.message}`);
+      console.warn(`Fetch failed: ${url}: ${err.message}`);
       throw err;
     });
   cache.set(url, { at: Date.now(), ttl, value });
