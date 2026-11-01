@@ -16,7 +16,7 @@ Priorities, in order:
 3. Team context: identity, goals, last season, news, lore.
 4. Live score and box score.
 
-Non-goals for now: accounts, persistence, deployment. AI news summaries are planned (see below); news is plain ESPN headlines until then.
+Non-goals for now: accounts, persistence. AI news summaries are planned (see below); news is plain ESPN headlines until then.
 
 ## Stack
 
@@ -25,7 +25,7 @@ Non-goals for now: accounts, persistence, deployment. AI news summaries are plan
 - **Shared types**: `shared/types.ts`, the contract between server and UI. Change it first when adding data.
 - Hash routing in `web/src/lib.ts` (no router dependency): `#/` (home), `#/p/:playerId` and `#/t/:teamId` (home with a player or team modal), `#/game/:id`, `#/game/:id/p/:playerId`.
 
-Runs on a Hetzner box (CPU only, 62 GB RAM), accessed through an SSH tunnel. Server binds to `127.0.0.1:5180`.
+Runs on a Hetzner box (CPU only, 62 GB RAM). See Deployment below. Outside the container, the API defaults to `127.0.0.1:5180`.
 
 ## Layout
 
@@ -113,3 +113,19 @@ Direction: "broadcast tale of the tape". Dark arena base (`#0F1622`), each team 
 - Head-to-head history between the two teams.
 - Persisted cache (SQLite) if ESPN gets slow, and a real deploy.
 - Keep `data/lore.json` up to date (titles list ends with 2025; ESPN-derived data is always current).
+
+<!-- platform:start -->
+## Deployment
+
+Live at https://nba.bohdanmoroz.com, behind the shared hub login. Do not add auth to this app.
+
+- The `nba-tracker` container mounts this repo's primary checkout and runs `npm run live`. Caddy reaches it at `nba-tracker:3000`. No host port is published.
+- There is no build or deploy step. Files changed in the primary checkout go live automatically, so `main` there is production.
+- Worktree changes are not live until merged into the primary checkout's `main`. If merged on GitHub, run `git pull` in the primary checkout.
+- Preview in a worktree with `npm run dev`. Don't use the primary checkout for experiments.
+- If dependencies change, once they're on `main` run `npm install` in the primary checkout, on the host, then `docker restart nba-tracker`.
+- If `compose.yml` changes, run `docker compose up -d` in the primary checkout.
+- Logs: `docker logs -f nba-tracker`.
+- Never use root or an Alpine image: files and `node_modules` are shared with the host.
+- Routing, login and the app list belong to the `hub` repo. Don't change them from here.
+<!-- platform:end -->

@@ -34,20 +34,9 @@ npm install
 npm start          # builds the frontend, serves everything on http://127.0.0.1:5180
 ```
 
-The server binds to `127.0.0.1` only. From your own machine, tunnel to it:
+The live version runs in a container at https://nba.bohdanmoroz.com, behind the shared login from the [hub](https://github.com/BohdanMoroz11/hub) repo. Files changed in the primary checkout go live automatically.
 
-```bash
-ssh -L 5180:127.0.0.1:5180 <server>
-# then open http://localhost:5180
-```
-
-Development (hot reload for UI and API):
-
-```bash
-npm run dev        # Vite on :5173 (proxies /api to :5180), API on :5180 with tsx watch
-```
-
-Tunnel `5173` instead when using dev mode. `PORT` and `HOST` env vars override the API server address.
+Development (hot reload for UI and API): `npm run dev` (Vite on :5173, API on :5180). `PORT` and `HOST` override the API address.
 
 Other scripts: `npm run typecheck`, `npm run build`.
 
