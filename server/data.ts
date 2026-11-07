@@ -215,7 +215,8 @@ async function teamStatsFor(teamId: string, year: number): Promise<TeamDetail["s
   const rankOf = (x: any) => (x?.rankDisplayValue ? parseInt(String(x.rankDisplayValue).replace(/\D+/g, "")) || undefined : undefined);
 
   const entries = (standings?.children ?? []).flatMap((c: any) => c.standings.entries);
-  const sv = (e: any, n: string) => num(e.stats.find((x: any) => x.name === n)?.value);
+  const raw = (e: any, n: string) => e.stats.find((x: any) => x.name === n)?.value;
+  const sv = (e: any, n: string) => num(raw(e, n));
   const mine = entries.find((e: any) => String(e.team.id) === teamId);
   const rankBy = (n: string, lowerIsBetter: boolean) => {
     if (!mine) return undefined;
@@ -225,14 +226,15 @@ async function teamStatsFor(teamId: string, year: number): Promise<TeamDetail["s
 
   const rows: TeamStatRow[] = [];
   const add = (key: string, label: string, value: unknown, rank?: number, digits = 1, suffix = "") => {
+    // num() turns a missing stat into 0, so check the raw value: no stat means no row, not "0.0".
+    if (value == null || !Number.isFinite(parseFloat(String(value)))) return;
     const v = num(value);
-    if (!v && v !== 0) return;
     rows.push({ key, label, value: v, display: `${v > 0 && key === "diff" ? "+" : ""}${v.toFixed(digits)}${suffix}`, rank });
   };
   add("ppg", "Points scored", find("offensive", "avgPoints")?.value, rankOf(find("offensive", "points")));
   if (mine) {
-    add("papg", "Points allowed", sv(mine, "avgPointsAgainst"), rankBy("avgPointsAgainst", true));
-    add("diff", "Point margin", sv(mine, "differential"), rankBy("differential", false));
+    add("papg", "Points allowed", raw(mine, "avgPointsAgainst"), rankBy("avgPointsAgainst", true));
+    add("diff", "Point margin", raw(mine, "differential"), rankBy("differential", false));
   }
   add("pace", "Pace", find("offensive", "paceFactor")?.value, rankOf(find("offensive", "paceFactor")));
   add("fg", "Field goal %", find("offensive", "fieldGoalPct")?.value, rankOf(find("offensive", "fieldGoalPct")));
